@@ -262,7 +262,6 @@ In your response, use the following format as the title of each alert section:
 
 Keep your response concise and do NOT add any additional notes or commentary.
 """
-
         summary = summarize_with_llm(
             prompt,
             model_id,
