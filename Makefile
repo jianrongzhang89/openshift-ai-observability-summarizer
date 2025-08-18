@@ -18,8 +18,11 @@ VERSION ?= 0.1.2
 PLATFORM ?= linux/amd64
 
 # Container image names
-METRICS_API_IMAGE = $(REGISTRY)/$(ORG)/$(REPOSITORY)/metrics-api
-METRICS_UI_IMAGE = $(REGISTRY)/$(ORG)/$(REPOSITORY)/metrics-ui
+#METRICS_API_IMAGE = $(REGISTRY)/$(ORG)/$(REPOSITORY)/metrics-api
+#METRICS_UI_IMAGE = $(REGISTRY)/$(ORG)/$(REPOSITORY)/metrics-ui
+METRICS_API_IMAGE = $(REGISTRY)/$(ORG)/metrics-api
+METRICS_UI_IMAGE = $(REGISTRY)/$(ORG)/metric-ui
+
 METRICS_ALERTING_IMAGE = $(REGISTRY)/$(ORG)/$(REPOSITORY)/metrics-vllm-alerting
 
 

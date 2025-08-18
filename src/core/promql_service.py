@@ -75,8 +75,26 @@ def generate_promql_from_question(question: str, namespace: Optional[str], model
     for query in selected_queries:
         if query and query not in queries:
             queries.append(query)
+
+    # Step 4: Semantic fallback (optional) – use discovered metrics + intelligent selection
+    enable_semantic = os.getenv("ENABLE_SEMANTIC_PROMQL", "1").lower() in ("1", "true", "yes")
+    if enable_semantic and (len(queries) == 0 or not pattern_detected):
+        try:
+            available_metrics = discover_available_metrics_from_thanos(namespace, model_name, is_fleet_wide)
+            if available_metrics:
+                selected_metrics = intelligent_metric_selection(question_lower, available_metrics)
+                for metric_info in selected_metrics:
+                    try:
+                        q = generate_promql_from_discovered_metric(metric_info, namespace, model_name, rate_interval, is_fleet_wide)
+                        if q and q not in queries:
+                            queries.append(q)
+                    except Exception:
+                        continue
+        except Exception:
+            # Silent fallback – keep existing behavior
+            pass
     
-    # If no specific metrics discovered/selected, add intelligent defaults
+    # If still no specific metrics discovered/selected, add intelligent defaults
     # But DON'T add defaults if user asked a SPECIFIC question that was successfully detected
     if len(queries) == 0 or (len(queries) == 1 and not pattern_detected):
         print("🔧 No specific metrics discovered, adding basic defaults")
@@ -94,7 +112,12 @@ def generate_promql_from_question(question: str, namespace: Optional[str], model
             ]
         queries.extend(default_queries)
     
-    return queries[:6]  # Limit to 6 queries
+    # Deduplicate and cap
+    deduped = []
+    for q in queries:
+        if q not in deduped:
+            deduped.append(q)
+    return deduped[:6]  # Limit to 6 queries
 
 
 def extract_time_period_from_question(question: str) -> Optional[str]:
@@ -642,14 +665,21 @@ def intelligent_metric_selection(question: str, available_metrics: List[Dict[str
     Intelligently select the most relevant metrics for a given question
     """
     question_lower = question.lower()
-    selected_metrics = []
+    selected_metrics: List[Dict[str, Any]] = []
     
     # Special handling for latency queries
     if any(word in question_lower for word in ["latency", "p95", "p99", "percentile", "response time"]):
         latency_metrics = select_latency_metrics(available_metrics, question_lower)
         selected_metrics.extend(latency_metrics)
     
-    # General keyword-based selection
+    # General keyword-based selection + lightweight token overlap scoring
+    def tokenize(text: str) -> set:
+        return set(re.findall(r"[a-z0-9_]+", text.lower())) if text else set()
+
+    question_tokens = tokenize(question_lower)
+
+    scored: List[Tuple[float, Dict[str, Any]]] = []
+
     for metric in available_metrics:
         metric_name = metric.get("name", "").lower()
         metric_description = metric.get("description", "").lower()
@@ -691,13 +721,35 @@ def intelligent_metric_selection(question: str, available_metrics: List[Dict[str
         elif any(word in question_lower for word in ["cpu", "processor"]):
             if any(word in metric_name for word in ["cpu", "processor"]):
                 is_relevant = True
-        
-        if is_relevant and metric not in selected_metrics:
-            selected_metrics.append(metric)
-    
-    # Sort by priority and relevance
-    selected_metrics.sort(key=lambda m: m.get("priority", 999))
-    
+
+        print(f"ZZZZ intelligent_metric_selection metric_name: {metric_name}, metric_description: {metric_description}")
+        # Token overlap score (Jaccard)
+        name_tokens = tokenize(metric_name)
+        desc_tokens = tokenize(metric_description)
+        tokens = name_tokens.union(desc_tokens)
+        overlap = 0.0
+        if question_tokens and tokens:
+            intersection = question_tokens.intersection(tokens)
+            union = question_tokens.union(tokens)
+            overlap = len(intersection) / max(1, len(union))
+
+        # Base score: keyword relevance + overlap + priority boost
+        base = 0.0
+        if is_relevant:
+            base += 1.0
+        # Inverse priority: lower is better → add small bonus
+        priority = metric.get("priority", 999)
+        base += max(0.0, 1.0 - min(priority, 999) / 1000.0)
+        score = base + overlap
+
+        scored.append((score, metric))
+
+    # Sort by score desc, then by priority asc
+    scored.sort(key=lambda x: (-x[0], x[1].get("priority", 999)))
+    selected_metrics = [m for _, m in scored if m]
+
+    print(f"ZZZZ intelligent_metric_selection selected_metrics: {selected_metrics[0:5]}")
+
     return selected_metrics[:5]  # Return top 5 most relevant
 
 
