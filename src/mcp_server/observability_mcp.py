@@ -49,7 +49,13 @@ class ObservabilityMCPServer:
         from .tools.tempo_query_tool import (
             query_tempo_tool,
             get_trace_details_tool,
-            chat_tempo_tool,
+            chat_tempo_tool
+        )
+        from .tools.korrel8r_tools import (
+            korrel8r_find_related,
+            korrel8r_health,
+            korrel8r_build_links,
+            korrel8r_query_objects,
         )
 
         # Register vLLM tools
@@ -85,3 +91,8 @@ class ObservabilityMCPServer:
         self.mcp.tool()(query_tempo_tool)
         self.mcp.tool()(get_trace_details_tool)
         self.mcp.tool()(chat_tempo_tool)
+        # Register Korrel8r tools
+        self.mcp.tool()(korrel8r_health)
+        self.mcp.tool()(korrel8r_find_related)
+        self.mcp.tool()(korrel8r_build_links)
+        self.mcp.tool()(korrel8r_query_objects)
