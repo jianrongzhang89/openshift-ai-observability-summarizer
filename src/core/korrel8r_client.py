@@ -19,6 +19,7 @@ from .config import (
     VERIFY_SSL,
 )
 from common.pylogger import get_python_logger
+from .config import THANOS_TOKEN
 
 
 logger = get_python_logger()
@@ -41,7 +42,9 @@ class Korrel8rClient:
 
         url = f"{self.base_url}{path}"
         headers: Dict[str, str] = {"Content-Type": "application/json"}
-        # If Korrel8r requires auth, add here (bearer token, etc.)
+        # Forward bearer token so Korrel8r can impersonate to stores (Prometheus, etc.)
+        if THANOS_TOKEN:
+            headers["Authorization"] = f"Bearer {THANOS_TOKEN}"
 
         # Choose verify behavior: use service CA only for in-cluster svc endpoints
         verify_param: Any = self._choose_verify_param(url)
@@ -69,6 +72,8 @@ class Korrel8rClient:
 
         url = f"{self.base_url}{path}"
         headers: Dict[str, str] = {}
+        if THANOS_TOKEN:
+            headers["Authorization"] = f"Bearer {THANOS_TOKEN}"
 
         verify_param: Any = self._choose_verify_param(url)
 
@@ -80,6 +85,10 @@ class Korrel8rClient:
                 verify=verify_param,
                 timeout=self.timeout_seconds,
             )
+            logger.info("Korrel8r url:%s, params: %s", url, params)
+            logger.info("Korrel8r headers: %s", headers)
+            logger.info("Korrel8r GET response: %s", response.json())
+
             response.raise_for_status()
             return response.json()
         except requests.exceptions.Timeout as e:

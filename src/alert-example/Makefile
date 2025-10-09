@@ -3,7 +3,7 @@
 REGISTRY ?= quay.io
 ORG ?= jianrzha
 IMAGE ?= alert-example
-TAG ?= latest
+TAG ?= 0.1.0
 
 IMG ?= $(REGISTRY)/$(ORG)/$(IMAGE):$(TAG)
 
@@ -15,7 +15,7 @@ NAMESPACE ?= default
 K8S_DIR ?= ./k8s
 KORREL8R_NS ?= korrel8r
 
-.PHONY: help build push publish print-image deploy-app deploy-alert deploy set-image print-route deploy-korrel8r
+.PHONY: help build push publish print-image deploy-app deploy-alert deploy set-image print-route deploy-korrel8r patch-configmap
 
 help:
 	@echo "Usage:"
@@ -26,6 +26,7 @@ help:
 	@echo "  make set-image       Set deployment image to $(IMG) in $(NAMESPACE)"
 	@echo "  make deploy-alert    Apply PrometheusRule to $(NAMESPACE)"
 	@echo "  make deploy-korrel8r Deploy Korrel8r CR, RBAC, and config to $(KORREL8R_NS)"
+	@echo "  make patch-configmap Patch the app ConfigMap using k8s/configmap_patch.yaml"
 	@echo "  make print-route     Print the OpenShift Route URL"
 	@echo "  make deploy          Deploy app and alert"
 	@echo "Variables (override with VAR=value):"
@@ -73,5 +74,8 @@ deploy-korrel8r:
 	$(KUBECTL) apply -n $(KORREL8R_NS) -f $(K8S_DIR)/korrel8r-config.yaml
 	$(KUBECTL) apply -n $(KORREL8R_NS) -f $(K8S_DIR)/korrel8r-cr.yaml
 	$(KUBECTL) rollout status -n $(KORREL8R_NS) deployment/korrel8r
+
+patch-configmap:
+	$(KUBECTL) apply -n $(NAMESPACE) -f $(K8S_DIR)/configmap_patch.yaml
 
 

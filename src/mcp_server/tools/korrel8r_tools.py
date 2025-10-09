@@ -158,9 +158,10 @@ def korrel8r_query_objects(query: str) -> List[Dict[str, Any]]:
     """Execute a Korrel8r domain query and return objects.
 
     Example query strings (see docs [korrel8r#_query_8](https://korrel8r.github.io/korrel8r/#_query_8)):
-      - k8s:Pod:{namespace="llm-serving", name="vllm-inference-*"}
-      - loki:log:{kubernetes.namespace_name="llm-serving",kubernetes.pod_name="p-abc"}
-      - trace:span:{.k8s.namespace.name="llm-serving"}
+      - alert:alert:{"alertname":"PodDisruptionBudgetAtLimit"}
+      - k8s:Pod:{"namespace", "llm-serving", "name":"vllm-inference-*"}
+      - loki:log:{"kubernetes.namespace_name":"llm-serving","kubernetes.pod_name":"p-abc"}
+      - trace:span:{".k8s.namespace.name":"llm-serving"}
     """
     if not KORREL8R_ENABLED:
         err = MCPException(
