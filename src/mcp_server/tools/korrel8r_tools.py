@@ -80,78 +80,7 @@ def korrel8r_find_related(
         return err.to_mcp_response()
 
 
-def korrel8r_build_links(
-    entities_json: str,
-    window_start: Optional[str] = None,
-    window_end: Optional[str] = None,
-) -> List[Dict[str, Any]]:
-    """Populate link fields for correlated entities using configured bases.
-
-    entities_json: JSON string of entities (heterogeneous list) to avoid overly
-                   complex MCP param typing.
-    """
-    try:
-        entities = json.loads(entities_json)
-        if not isinstance(entities, list):
-            raise ValueError("entities must be a JSON array")
-    except Exception as e:
-        err = MCPException(
-            message=f"Invalid entities_json: {str(e)}",
-            error_code=MCPErrorCode.INVALID_INPUT,
-            recovery_suggestion="Provide entities_json as a JSON array.",
-        )
-        return err.to_mcp_response()
-
-    # Build links best-effort
-    for ent in entities:
-        try:
-            if not isinstance(ent, dict):
-                continue
-            # K8s objects
-            if "kind" in ent and "name" in ent:
-                # Simple plural map for common kinds
-                plural_map = {
-                    "Pod": "pods",
-                    "Deployment": "deployments",
-                    "StatefulSet": "statefulsets",
-                    "DaemonSet": "daemonsets",
-                    "ReplicaSet": "replicasets",
-                    "Service": "services",
-                    "Namespace": "namespaces",
-                    "Node": "nodes",
-                }
-                kind = ent.get("kind")
-                name = ent.get("name")
-                ns = ent.get("namespace")
-                if kind in ("Node", "Namespace"):
-                    if CONSOLE_BASE_URL:
-                        ent["link"] = f"{CONSOLE_BASE_URL.rstrip('/')}/k8s/cluster/{plural_map.get(kind, kind.lower()+'s')}/{name}"
-                else:
-                    if CONSOLE_BASE_URL and ns:
-                        ent["link"] = f"{CONSOLE_BASE_URL.rstrip('/')}/k8s/ns/{ns}/{plural_map.get(kind, kind.lower()+'s')}/{name}"
-
-            # Tempo traces
-            if "traceId" in ent and TEMPO_BASE_URL:
-                ent["link"] = f"{TEMPO_BASE_URL.rstrip('/')}/trace/{ent.get('traceId')}"
-
-            # Loki logs (build Grafana Explore link when possible)
-            if ent.get("type") == "loki/log" and GRAFANA_BASE_URL and LOKI_DATASOURCE_UID and ent.get("query"):
-                q = ent.get("query", "").replace("'", "\\'")
-                start_iso = window_start or ""
-                end_iso = window_end or ""
-                left = (
-                    f"(datasource:'{LOKI_DATASOURCE_UID}',"
-                    f"queries:!((expr:'{q}')),"
-                    f"range:(from:'{start_iso}',to:'{end_iso}'))"
-                )
-                from urllib.parse import quote
-                ent["link"] = f"{GRAFANA_BASE_URL.rstrip('/')}/explore?left={quote(left, safe='')}"
-
-        except Exception:
-            # Best-effort; skip on errors
-            continue
-
-    return _resp(json.dumps({"entities": entities}))
+# korrel8r_build_links tool removed per request
 
 
 def korrel8r_query_objects(query: str) -> List[Dict[str, Any]]:
@@ -181,6 +110,34 @@ def korrel8r_query_objects(query: str) -> List[Dict[str, Any]]:
             message=f"Korrel8r query failed: {str(e)}",
             error_code=MCPErrorCode.INTERNAL_ERROR,
             recovery_suggestion="Check query syntax and Korrel8r service availability.",
+        )
+        return err.to_mcp_response()
+
+ 
+def korrel8r_list_goals(goals: List[str], start: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """List Korrel8r goals using explicit parameters.
+
+    Args:
+        goals: List of goal class names (see docs: https://korrel8r.github.io/korrel8r/#Goals)
+        start: Start object (see docs: https://korrel8r.github.io/korrel8r/#Start)
+    """
+    if not KORREL8R_ENABLED:
+        err = MCPException(
+            message="Korrel8r integration is disabled",
+            error_code=MCPErrorCode.FEATURE_DISABLED,
+            recovery_suggestion="Enable KORREL8R_ENABLED to use this tool.",
+        )
+        return err.to_mcp_response()
+    try:
+        client = Korrel8rClient()
+        result = client.list_goals(goals=goals, start=start)
+        return _resp(json.dumps(result))
+    except Exception as e:
+        logger.error("korrel8r_list_goals failed: %s", e)
+        err = MCPException(
+            message=f"Korrel8r list goals failed: {str(e)}",
+            error_code=MCPErrorCode.RESOURCE_UNAVAILABLE,
+            recovery_suggestion="Verify Korrel8r URL, token and service health.",
         )
         return err.to_mcp_response()
 

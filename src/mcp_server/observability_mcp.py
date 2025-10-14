@@ -54,8 +54,8 @@ class ObservabilityMCPServer:
         from .tools.korrel8r_tools import (
             korrel8r_find_related,
             korrel8r_health,
-            korrel8r_build_links,
             korrel8r_query_objects,
+            korrel8r_list_goals,
         )
 
         # Register vLLM tools
@@ -94,5 +94,5 @@ class ObservabilityMCPServer:
         # Register Korrel8r tools
         self.mcp.tool()(korrel8r_health)
         self.mcp.tool()(korrel8r_find_related)
-        self.mcp.tool()(korrel8r_build_links)
         self.mcp.tool()(korrel8r_query_objects)
+        self.mcp.tool()(korrel8r_list_goals)

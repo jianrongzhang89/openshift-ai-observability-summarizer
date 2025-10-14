@@ -150,4 +150,21 @@ class Korrel8rClient:
             raise ValueError("query must be a non-empty string")
         return self._get("/api/v1alpha1/objects", params={"query": query})
 
+    def list_goals(self, goals: List[str], start: Dict[str, Any]) -> Any:
+        """List Korrel8r goal classes for a given start.
+
+        POST /api/v1alpha1/lists/goals
+        Args:
+            goals: List of goal class names (e.g., ["log:log", "trace:span"]).
+            start: Start object per Korrel8r spec (see docs: Start model).
+        Returns:
+            JSON response from Korrel8r.
+        """
+        if not isinstance(goals, list) or not all(isinstance(g, str) for g in goals):
+            raise ValueError("goals must be a list of strings")
+        if not isinstance(start, dict):
+            raise ValueError("start must be a dict per Korrel8r Start model")
+        payload: Dict[str, Any] = {"goals": goals, "start": start}
+        return self._post("/api/v1alpha1/lists/goals", payload=payload)
+
 
