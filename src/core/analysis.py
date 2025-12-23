@@ -8,7 +8,6 @@ All functions are framework-agnostic and operate on pandas DataFrames.
 
 import pandas as pd
 from scipy.stats import linregress
-from typing import Dict, Tuple, List
 
 
 def detect_anomalies(df: pd.DataFrame, label: str) -> str:
@@ -66,41 +65,3 @@ def describe_trend(df: pd.DataFrame) -> str:
         return "decreasing"
     
     return "stable"
-
-
-def compute_health_score(metric_dfs: Dict[str, pd.DataFrame]) -> Tuple[int, List[str]]:
-    """
-    Compute an overall health score based on key performance metrics.
-    
-    Args:
-        metric_dfs: Dictionary mapping metric names to DataFrames with 'value' column
-        
-    Returns:
-        Tuple of (health_score, list_of_issues)
-        - health_score: Integer score (0 is healthy, negative indicates issues)
-        - list_of_issues: List of human-readable issue descriptions
-    """
-    score, reasons = 0, []
-    
-    # Check P95 Latency
-    if "P95 Latency (s)" in metric_dfs and not metric_dfs["P95 Latency (s)"].empty:
-        mean = metric_dfs["P95 Latency (s)"]["value"].mean()
-        if mean > 2:
-            score -= 2
-            reasons.append(f"High Latency (avg={mean:.2f}s)")
-    
-    # Check GPU Utilization
-    if "GPU Usage (%)" in metric_dfs and not metric_dfs["GPU Usage (%)"].empty:
-        mean = metric_dfs["GPU Usage (%)"]["value"].mean()
-        if mean < 10:
-            score -= 1
-            reasons.append(f"Low GPU Utilization (avg={mean:.2f}%)")
-    
-    # Check Request Queue
-    if "Requests Running" in metric_dfs and not metric_dfs["Requests Running"].empty:
-        mean = metric_dfs["Requests Running"]["value"].mean()
-        if mean > 10:
-            score -= 1
-            reasons.append(f"Too many requests (avg={mean:.2f})")
-    
-    return score, reasons 

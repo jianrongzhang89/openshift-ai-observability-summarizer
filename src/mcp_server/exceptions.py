@@ -206,50 +206,6 @@ class ConfigurationError(MCPException):
         )
 
 
-def handle_mcp_exception(func):
-    """Decorator to standardize exception handling for MCP tools."""
-    import functools
-    
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except MCPException as e:
-            # Log the MCP exception with context
-            logger.error(
-                "MCP tool error: %s",
-                e.message,
-                extra={
-                    "error_code": e.error_code.value,
-                    "tool_name": func.__name__,
-                    "details": e.details
-                }
-            )
-            return e.to_mcp_response()
-        except Exception as e:
-            # Handle unexpected exceptions
-            logger.exception(
-                "Unexpected error in MCP tool: %s",
-                func.__name__,
-                extra={
-                    "tool_name": func.__name__,
-                    "error_type": type(e).__name__
-                }
-            )
-            
-            # Create a generic internal error
-            internal_error = MCPException(
-                message=f"An unexpected error occurred: {str(e)}",
-                error_code=MCPErrorCode.INTERNAL_ERROR,
-                details={"error_type": type(e).__name__},
-                recovery_suggestion="Please try again. If the problem persists, contact support.",
-                original_exception=e
-            )
-            return internal_error.to_mcp_response()
-    
-    return wrapper
-
-
 def parse_prometheus_error(response, query: Optional[str] = None) -> PrometheusError:
     """Parse Prometheus HTTP error response into structured exception."""
     status_code = getattr(response, 'status_code', None)

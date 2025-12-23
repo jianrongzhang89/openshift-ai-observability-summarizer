@@ -23,7 +23,7 @@ if _SRC_ROOT not in sys.path:
     sys.path.append(_SRC_ROOT)
 
 from error_handler import parse_mcp_error, display_mcp_error
-from common.pylogger import get_python_logger, force_reconfigure_all_loggers
+from common.pylogger import get_python_logger
 from common.mcp_utils import (
     extract_text_from_mcp_result,
     is_double_encoded_mcp_response,
@@ -926,42 +926,6 @@ def parse_model_config_text(text: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error parsing model config text: {e}")
         return {}
-
-
-def chat_tempo_mcp(question: str) -> Dict[str, Any]:
-    """
-    Chat with Tempo traces using MCP tools.
-    
-    Args:
-        question: Natural language question about traces (time range extracted automatically)
-    
-    Returns:
-        Tempo chat analysis results
-    """
-    try:
-        logger.debug(f"Chatting with Tempo: {question}")
-        logger.debug(f"Calling chat_tempo_tool with question: {question}")
-        
-        result = mcp_client.call_tool_sync("chat_tempo_tool", {
-            "question": question
-        })
-        
-        logger.debug(f"chat_tempo_tool result: {result}")
-        
-        logger.debug("Tempo chat completed successfully")
-        return {
-            "status": "success",
-            "data": result,
-            "question": question
-        }
-        
-    except Exception as e:
-        logger.error(f"Tempo chat MCP call failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "question": question
-        }
 
 
 def chat_openshift_mcp(

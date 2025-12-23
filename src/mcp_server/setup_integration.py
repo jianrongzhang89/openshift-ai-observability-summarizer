@@ -18,7 +18,6 @@ import json
 import os
 import sys
 import shutil
-import subprocess
 import platform
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -52,21 +51,6 @@ def find_virtual_env(project_root: Path) -> Optional[Path]:
             return venv_path
     
     return None
-
-
-def get_mcp_server_executable(project_root: Path) -> str:
-    """Get the HTTP MCP server executable path (not used for stdio)."""
-    venv_path = find_virtual_env(project_root)
-    if not venv_path:
-        print("⚠️  Warning: Virtual environment not found, using system Python")
-        return "obs-mcp-server"
-    if platform.system() == "Windows":
-        executable = venv_path / "Scripts" / "obs-mcp-server.exe"
-        if not executable.exists():
-            executable = venv_path / "Scripts" / "obs-mcp-server"
-    else:
-        executable = venv_path / "bin" / "obs-mcp-server"
-    return str(executable)
 
 
 def get_mcp_stdio_executable(project_root: Path) -> str:

@@ -24,7 +24,6 @@ from mcp_client_helper import (
     get_vllm_metrics_mcp,
     analyze_openshift_mcp,
     chat_openshift_mcp,
-    parse_analyze_response,
     get_multi_models_mcp,
     get_gpu_info_mcp,
     get_deployment_info_mcp,
@@ -33,8 +32,6 @@ from mcp_client_helper import (
 # Import MCP utilities from common module (breaks circular dependency)
 from common.mcp_utils import (
     extract_text_from_mcp_result,
-    is_double_encoded_mcp_response,
-    extract_from_double_encoded_response,
 )
 # Add current directory to Python path for consistent imports
 import sys
@@ -48,7 +45,6 @@ from mcp_client_helper import get_namespaces_mcp, get_models_mcp, get_model_conf
 from error_handler import parse_mcp_error, display_mcp_error, display_error_with_context, handle_client_or_mcp_error
 import sys
 import os
-import importlib.util
 from common.pylogger import get_python_logger
 
 # Initialize shared structured logger for UI
