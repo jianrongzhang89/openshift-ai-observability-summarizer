@@ -519,8 +519,6 @@ def analyze_vllm(
             log_trace_data = build_correlated_context_from_metrics(
                 metric_dfs=metric_dfs,
                 model_name=model_name,
-                start_ts=resolved_start,
-                end_ts=resolved_end,
             )
 
         # Build prompt base and summarize (Korrel8r enrichment may augment prompt later)

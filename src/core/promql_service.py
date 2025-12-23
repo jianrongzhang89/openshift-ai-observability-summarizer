@@ -361,7 +361,7 @@ def categorize_any_metric(metric_name: str, namespace: Optional[str], model_name
     
     # === vLLM/LLM Metrics (HIGHEST PRIORITY) ===
     if metric_name.startswith("vllm:") or "llm" in name_lower:
-        return categorize_vllm_metric(metric_name, namespace, model_name, is_fleet_wide)
+        return categorize_vllm_metric(metric_name)
     
     # === Prometheus/Monitoring Metrics (HIGH PRIORITY - before generic latency) ===
     elif metric_name.startswith("prometheus_") or metric_name.startswith("alertmanager_"):
@@ -378,7 +378,7 @@ def categorize_any_metric(metric_name: str, namespace: Optional[str], model_name
     
     # === Kubernetes/OpenShift Metrics ===
     elif metric_name.startswith("kube_") or metric_name.startswith("openshift_"):
-        return categorize_k8s_metric(metric_name, namespace, is_fleet_wide)
+        return categorize_k8s_metric(metric_name)
     
     # === GPU/Hardware Metrics (multi-vendor: NVIDIA + Intel Gaudi) ===
     # Only categorize metrics with known GPU exporter prefixes (DCGM for NVIDIA, habanalabs for Intel Gaudi)
@@ -493,7 +493,7 @@ def categorize_generic_metric(metric_name: str) -> Optional[Dict[str, Any]]:
     }
 
 
-def categorize_vllm_metric(metric_name: str, namespace: Optional[str], model_name: str, is_fleet_wide: bool) -> Optional[Dict[str, Any]]:
+def categorize_vllm_metric(metric_name: str) -> Optional[Dict[str, Any]]:
     """
     Categorize vLLM-specific metrics with enhanced context
     """
@@ -567,7 +567,7 @@ def categorize_vllm_metric(metric_name: str, namespace: Optional[str], model_nam
     }
 
 
-def categorize_k8s_metric(metric_name: str, namespace: Optional[str], is_fleet_wide: bool) -> Optional[Dict[str, Any]]:
+def categorize_k8s_metric(metric_name: str) -> Optional[Dict[str, Any]]:
     """
     Categorize Kubernetes-specific metrics
     """
@@ -769,7 +769,7 @@ def intelligent_metric_selection(question: str, available_metrics: List[Dict[str
     
     # Special handling for latency queries
     if any(word in question_lower for word in ["latency", "p95", "p99", "percentile", "response time"]):
-        latency_metrics = select_latency_metrics(available_metrics, question_lower)
+        latency_metrics = select_latency_metrics(available_metrics)
         selected_metrics.extend(latency_metrics)
     
     # General keyword-based selection
@@ -824,7 +824,7 @@ def intelligent_metric_selection(question: str, available_metrics: List[Dict[str
     return selected_metrics[:5]  # Return top 5 most relevant
 
 
-def select_latency_metrics(available_metrics: List[Dict[str, Any]], question_lower: str) -> List[Dict[str, Any]]:
+def select_latency_metrics(available_metrics: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Specialized selection for latency-related queries
     """

@@ -1680,8 +1680,6 @@ def build_log_trace_context_for_pod_issues(
         return build_correlated_context_from_metrics(
             metric_dfs=pairs_metric_dfs,
             model_name=namespace_label or "",
-            start_ts=start_ts,
-            end_ts=end_ts,
         )
     except Exception:
         return ""
@@ -1958,8 +1956,6 @@ def _span_is_error_like(span: Dict[str, Any]) -> bool:
 def build_correlated_context_from_metrics(
     metric_dfs: Dict[str, Any],
     model_name: str,
-    start_ts: int,
-    end_ts: int,
 ) -> str:
     """Return up to 5 log/trace lines for vLLM prompt.
 
