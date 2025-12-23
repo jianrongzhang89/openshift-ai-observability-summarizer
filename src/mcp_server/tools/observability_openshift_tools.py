@@ -3,8 +3,6 @@ import os
 import json
 import base64
 import core.metrics as core_metrics
-import re
-import pandas as pd
 import requests
 
 from .observability_vllm_tools import resolve_time_range

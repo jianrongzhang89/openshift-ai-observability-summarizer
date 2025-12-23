@@ -7,7 +7,7 @@ Progress updates are captured and returned in the response for UI replay.
 import json
 import logging
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 
 logger = logging.getLogger(__name__)
 
