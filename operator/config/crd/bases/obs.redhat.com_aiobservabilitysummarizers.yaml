@@ -1,0 +1,906 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  name: aiobservabilitysummarizers.obs.redhat.com
+spec:
+  group: obs.redhat.com
+  names:
+    kind: AIObservabilitySummarizer
+    listKind: AIObservabilitySummarizerList
+    plural: aiobservabilitysummarizers
+    shortNames:
+    - aiobs
+    singular: aiobservabilitysummarizer
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.health.overall
+      name: Health
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: AIObservabilitySummarizer is the Schema for the aiobservabilitysummarizers
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AIObservabilitySummarizerSpec defines the desired state of
+              AIObservabilitySummarizer
+            properties:
+              consolePlugin:
+                description: ConsolePlugin contains inline Console Plugin configuration
+                properties:
+                  autoEnable:
+                    default: true
+                    description: AutoEnable automatically enables the plugin in OpenShift
+                      Console
+                    type: boolean
+                  enabled:
+                    default: true
+                    description: Enabled determines if Console Plugin should be deployed
+                    type: boolean
+                  resources:
+                    description: Resources for Console Plugin
+                    properties:
+                      claims:
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+                          This is an alpha field and requires enabling the
+                          DynamicResourceAllocation feature gate.
+
+                          This field is immutable. It can only be set for containers.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                    type: object
+                required:
+                - enabled
+                type: object
+              consolePluginRef:
+                description: ConsolePluginRef references an external ConsolePlugin
+                  CR
+                properties:
+                  name:
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              enableLogging:
+                default: true
+                description: EnableLogging enables centralized logging with Loki
+                type: boolean
+              enableTracing:
+                default: true
+                description: EnableTracing enables distributed tracing with OpenTelemetry
+                type: boolean
+              imageRegistry:
+                default: quay.io/ecosystem-appeng
+                description: ImageRegistry is the container registry for component
+                  images
+                type: string
+              imageVersion:
+                default: 1.0.7
+                description: ImageVersion is the version tag for component images
+                type: string
+              mcpServer:
+                description: MCPServer contains inline MCP Server configuration
+                properties:
+                  enabled:
+                    default: true
+                    description: Enabled determines if MCP Server should be deployed
+                    type: boolean
+                  replicas:
+                    default: 1
+                    description: Replicas is the number of MCP Server replicas
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  resources:
+                    description: Resources for MCP Server
+                    properties:
+                      claims:
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+                          This is an alpha field and requires enabling the
+                          DynamicResourceAllocation feature gate.
+
+                          This field is immutable. It can only be set for containers.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                    type: object
+                  routeHost:
+                    description: RouteHost is the custom hostname for the Route
+                    type: string
+                required:
+                - enabled
+                type: object
+              mcpServerRef:
+                description: MCPServerRef references an external MCPServer CR
+                properties:
+                  name:
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              namespace:
+                description: Namespace is the target namespace where components will
+                  be deployed
+                minLength: 1
+                type: string
+              observabilityStack:
+                description: ObservabilityStack contains inline Observability Stack
+                  configuration
+                properties:
+                  enabled:
+                    default: true
+                    description: Enabled determines if Observability Stack should
+                      be deployed
+                    type: boolean
+                  loki:
+                    description: Loki contains Loki configuration
+                    properties:
+                      namespace:
+                        default: openshift-logging
+                        description: Namespace is the namespace for Loki deployment
+                        type: string
+                      retention:
+                        default: 30d
+                        description: Retention is the log retention period (e.g.,
+                          "7d", "30d", "90d")
+                        type: string
+                    type: object
+                  minio:
+                    description: MinIO contains observability MinIO configuration
+                    properties:
+                      namespace:
+                        default: observability-hub
+                        description: Namespace is the namespace for MinIO deployment
+                        type: string
+                      storageSize:
+                        default: 500Gi
+                        description: StorageSize is the PVC size for observability
+                          MinIO
+                        type: string
+                    type: object
+                  otelCollector:
+                    description: OTelCollector contains OpenTelemetry Collector configuration
+                    properties:
+                      namespace:
+                        default: observability-hub
+                        description: Namespace is the namespace for OTel Collector
+                          deployment
+                        type: string
+                    type: object
+                  tempo:
+                    description: Tempo contains Tempo configuration
+                    properties:
+                      namespace:
+                        default: observability-hub
+                        description: Namespace is the namespace for Tempo deployment
+                        type: string
+                      retention:
+                        default: 7d
+                        description: Retention is the trace retention period (e.g.,
+                          "7d", "30d")
+                        type: string
+                    type: object
+                required:
+                - enabled
+                type: object
+              observabilityStackRef:
+                description: ObservabilityStackRef references an external ObservabilityStack
+                  CR
+                properties:
+                  name:
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              rag:
+                description: RAG contains inline RAG backend configuration
+                properties:
+                  enabled:
+                    default: true
+                    description: Enabled determines if RAG backend should be deployed
+                    type: boolean
+                  externalLLMURL:
+                    description: ExternalLLMURL is the URL of an external LLM service
+                    type: string
+                  gpuTolerations:
+                    description: GPUTolerations for GPU node scheduling
+                    items:
+                      description: |-
+                        The pod this Toleration is attached to tolerates any taint that matches
+                        the triple <key,value,effect> using the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: |-
+                            Effect indicates the taint effect to match. Empty means match all taint effects.
+                            When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: |-
+                            Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                            If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                          type: string
+                        operator:
+                          description: |-
+                            Operator represents a key's relationship to the value.
+                            Valid operators are Exists and Equal. Defaults to Equal.
+                            Exists is equivalent to wildcard for value, so that a pod can
+                            tolerate all taints of a particular category.
+                          type: string
+                        tolerationSeconds:
+                          description: |-
+                            TolerationSeconds represents the period of time the toleration (which must be
+                            of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                            it is not set, which means tolerate the taint forever (do not evict). Zero and
+                            negative values will be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: |-
+                            Value is the taint value the toleration matches to.
+                            If the operator is Exists, the value should be empty, otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                  hfTokenSecret:
+                    description: HFTokenSecret is the name of the secret containing
+                      Hugging Face token
+                    type: string
+                  minio:
+                    description: MinIO contains MinIO configuration
+                    properties:
+                      accessKeySecret:
+                        description: AccessKeySecret is the name of the secret containing
+                          MinIO access key
+                        type: string
+                      buckets:
+                        description: Buckets is a list of bucket names to create
+                        items:
+                          type: string
+                        type: array
+                      storageSize:
+                        default: 100Gi
+                        description: StorageSize is the PVC size for MinIO
+                        type: string
+                    type: object
+                  model:
+                    description: Model is the LLM model identifier (e.g., llama-3-1-8b-instruct)
+                    type: string
+                  postgresql:
+                    description: PostgreSQL contains PostgreSQL configuration
+                    properties:
+                      database:
+                        default: rag_blueprint
+                        description: Database is the PostgreSQL database name
+                        type: string
+                      passwordSecret:
+                        description: PasswordSecret is the name of the secret containing
+                          PostgreSQL password
+                        type: string
+                      storageSize:
+                        default: 50Gi
+                        description: StorageSize is the PVC size for PostgreSQL
+                        type: string
+                      user:
+                        default: postgres
+                        description: User is the PostgreSQL username
+                        type: string
+                    type: object
+                  resources:
+                    description: Resources for RAG components
+                    properties:
+                      claims:
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+                          This is an alpha field and requires enabling the
+                          DynamicResourceAllocation feature gate.
+
+                          This field is immutable. It can only be set for containers.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                    type: object
+                required:
+                - enabled
+                - model
+                type: object
+              ragBackendRef:
+                description: RAGBackendRef references an external RAGBackend CR
+                properties:
+                  name:
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              selfHealing:
+                default: true
+                description: SelfHealing enables automatic remediation of degraded
+                  components
+                type: boolean
+            required:
+            - namespace
+            type: object
+          status:
+            description: AIObservabilitySummarizerStatus defines the observed state
+              of AIObservabilitySummarizer
+            properties:
+              components:
+                description: Components contains the status of each component
+                properties:
+                  consolePlugin:
+                    description: ConsolePlugin contains Console Plugin status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  korrel8r:
+                    description: Korrel8r contains Korrel8r status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  loki:
+                    description: Loki contains Loki status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  mcpServer:
+                    description: MCPServer contains MCP Server status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  minio:
+                    description: MinIO contains MinIO status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  otelCollector:
+                    description: OTelCollector contains OpenTelemetry Collector status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  rag:
+                    description: RAG contains RAG backend status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  tempo:
+                    description: Tempo contains Tempo status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                  ui:
+                    description: UI contains UI status
+                    properties:
+                      helmRelease:
+                        description: HelmRelease is the name of the Helm release managing
+                          this component
+                        type: string
+                      lastUpdateTime:
+                        description: LastUpdateTime is the last time this component
+                          was updated
+                        format: date-time
+                        type: string
+                      message:
+                        description: Message provides additional information about
+                          the component state
+                        type: string
+                      state:
+                        description: State is the current state of the component
+                        enum:
+                        - Pending
+                        - Installing
+                        - Ready
+                        - Degraded
+                        - Failed
+                        type: string
+                      version:
+                        description: Version is the deployed version of the component
+                        type: string
+                    type: object
+                type: object
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the object's state
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              health:
+                description: Health contains the overall health status
+                properties:
+                  components:
+                    additionalProperties:
+                      description: ComponentHealth represents the health of a single
+                        component
+                      properties:
+                        message:
+                          description: Message provides details about the health status
+                          type: string
+                        status:
+                          description: Status is the health status
+                          enum:
+                          - Healthy
+                          - Degraded
+                          - Unhealthy
+                          type: string
+                      type: object
+                    description: Components contains health status for each component
+                    type: object
+                  lastCheckTime:
+                    description: LastCheckTime is the last time health checks were
+                      performed
+                    format: date-time
+                    type: string
+                  overall:
+                    description: Overall is the overall health state
+                    enum:
+                    - Healthy
+                    - Degraded
+                    - Unhealthy
+                    type: string
+                type: object
+              installedOperators:
+                additionalProperties:
+                  type: string
+                description: InstalledOperators tracks the installed OpenShift operators
+                  and their versions
+                type: object
+              lastReconcileTime:
+                description: LastReconcileTime is the last time the operator reconciled
+                  this resource
+                format: date-time
+                type: string
+              observedGeneration:
+                description: ObservedGeneration reflects the generation of the most
+                  recently observed spec
+                format: int64
+                type: integer
+              phase:
+                description: Phase represents the current phase of the deployment
+                enum:
+                - Pending
+                - Installing
+                - Ready
+                - Failed
+                - Upgrading
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,58 @@
+apiVersion: obs.redhat.com/v1alpha1
+kind: AIObservabilitySummarizer
+metadata:
+  labels:
+    app.kubernetes.io/name: aiobservabilitysummarizer
+    app.kubernetes.io/instance: aiobservabilitysummarizer-sample
+    app.kubernetes.io/part-of: operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: operator
+  name: aiobservabilitysummarizer-sample
+spec:
+  # Target namespace for deployment
+  namespace: aiobs-production
+
+  # Container registry and version
+  imageRegistry: quay.io/ecosystem-appeng
+  imageVersion: "1.0.7"
+
+  # RAG Backend Configuration
+  rag:
+    enabled: true
+    model: llama-3-1-8b-instruct
+    postgresql:
+      storageSize: 50Gi
+      user: postgres
+      database: rag_blueprint
+    minio:
+      storageSize: 100Gi
+
+  # MCP Server Configuration
+  mcpServer:
+    enabled: true
+    replicas: 2
+
+  # Console Plugin Configuration
+  consolePlugin:
+    enabled: true
+    autoEnable: true
+
+  # Observability Stack Configuration
+  observabilityStack:
+    enabled: true
+    minio:
+      storageSize: 500Gi
+      namespace: observability-hub
+    tempo:
+      retention: "7d"
+      namespace: observability-hub
+    loki:
+      retention: "30d"
+      namespace: openshift-logging
+    otelCollector:
+      namespace: observability-hub
+
+  # Feature Flags
+  selfHealing: true
+  enableTracing: true
+  enableLogging: true
