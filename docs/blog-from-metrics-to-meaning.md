@@ -1,10 +1,33 @@
-# From Metrics to Meaning: Designing an AI Observability Summarizer for SREs
+# From Metrics to Meaning: Designing an AI Observability Summarizer for SREs (Deep Dive)
 
 **How we built an LLM-powered observability layer that transforms Prometheus metrics, traces, and logs into actionable insights**
 
 *Author: [Your Name/Team], Red Hat*
 
 ---
+
+> Want the shorter, publishable version for a broader SRE audience?
+> See `docs/blog-from-metrics-to-meaning-external.md`.
+
+## TL;DR (for busy on-call humans)
+
+- **What it is**: An OpenShift Console plugin + service that lets SREs ask questions in plain language and get back **evidence-backed** summaries (PromQL, traces, logs) with recommended next actions.
+- **What it replaces**: The “Prometheus → Tempo → Loki → screenshots → incident write-up” context-switching loop.
+- **How it stays trustworthy**: Curated metric catalog, schema-validated structured outputs, and **always showing supporting evidence** (queries, trace IDs, log excerpts).
+- **Where it runs**: Designed for OpenShift + OpenShift AI; supports local and external LLM providers depending on latency/cost/data-locality needs.
+
+## Contents
+
+- [The SRE Context-Switching Problem](#the-sre-context-switching-problem)
+- [Architecture: Multi-Signal Correlation at Query Time](#architecture-multi-signal-correlation-at-query-time)
+- [Correlation Engine: Linking Metrics, Traces, and Logs](#correlation-engine-linking-metrics-traces-and-logs)
+- [Why Query-Time Synthesis Beats Pre-Aggregated Dashboards](#why-query-time-synthesis-beats-pre-aggregated-dashboards)
+- [Design Decisions: What We Learned Building for Production SRE Use](#design-decisions-what-we-learned-building-for-production-sre-use)
+- [Lessons Learned: Building AI Tooling for SRE Workflows](#lessons-learned-building-ai-tooling-for-sre-workflows)
+- [Features: Built for SRE Workflows](#features-built-for-sre-workflows)
+- [Try It Yourself](#try-it-yourself)
+- [Roadmap: What's Next for AI-Powered Observability](#roadmap-whats-next-for-ai-powered-observability)
+- [Closing Thoughts: Observability as a Reasoning Problem](#closing-thoughts-observability-as-a-reasoning-problem)
 
 ## The SRE Context-Switching Problem
 
@@ -31,6 +54,16 @@ We built the AI Observability Summarizer to compress this multi-hour, multi-tool
 The system sits as an **intelligent observability proxy** between your telemetry backends (Prometheus/Thanos, Tempo, Loki) and the OpenShift Console. Unlike traditional dashboards that pre-aggregate and visualize data, we aggregate **at query time** based on user intent.
 
 ![Architecture Diagram](images/arch-openshift.jpg)
+
+### What “good” looks like (SRE requirements)
+
+For this to be usable in real incidents, we optimized for:
+
+- **Evidence-first answers**: summaries must link back to queries/samples, not just “AI says…”
+- **Deterministic behavior**: stable outputs you can test, diff, and rely on during incident pressure
+- **Graceful degradation**: if the model/provider is down, you still get raw queries/results (not a blank screen)
+- **Data locality controls**: keep sensitive telemetry on-cluster when required
+- **Operator ergonomics**: live where SREs already work (OpenShift Console), not “one more web app”
 
 ### Data Flow
 
@@ -108,7 +141,7 @@ Every prompt specifies:
 - **Role context:** "You are a senior SRE analyzing namespace X"
 - **Input context:** Time window, workload type (batch/inference/training), baseline values
 - **Required output format:** Structured fields (Current value, Meaning, Immediate concern, Key insight)
-- **Constraints:** Deterministic temperature (0), token limits, no markdown
+- **Constraints:** Deterministic temperature (0), token limits, and strict “no extra prose” rules
 
 **Example structured output:**
 ```
@@ -126,9 +159,9 @@ Key insight: Tokenization service degradation preventing GPU work submission
 5. **Aggressive output cleaning** - Removes markdown artifacts and meta-commentary
 
 **Measured impact:**
-- 99.2% format compliance (10K queries tested)
-- 0.8% retry rate (validation failures trigger stricter prompt)
-- P50 response time: 180ms (local Llama 3.1 8B), 850ms (GPT-4)
+- In internal replay testing, we consistently saw **high format compliance** once schema validation + retries were in place
+- Retry rates remained **low** (and visible), because validation failures trigger stricter prompts or fall back to raw data
+- Response time depends heavily on provider and hardware; local models can be **sub-second**, and cloud models are often **~1s-class** in typical conditions
 
 **3. Multi-Provider LLM Backend (Operational Flexibility)**
 
@@ -143,11 +176,13 @@ Key insight: Tokenization service degradation preventing GPU work submission
 
 | Provider | Model | Use Case | Cost | Latency |
 |----------|-------|----------|------|---------|
-| Local vLLM | Llama 3.1 8B | Default for metric analysis | $0 | 180ms |
-| OpenAI | GPT-4o | Complex root cause analysis | $0.03/query | 850ms |
-| Google | Gemini 1.5 Flash | Fast summaries | $0.0002/query | 320ms |
-| Anthropic | Claude Sonnet | Long-form reports | $0.015/query | 1.2s |
-| Deterministic | N/A (regex) | Simple metric lookups | $0 | 5ms |
+| Local vLLM | Llama 3.1 8B | Default for metric analysis | infra cost | sub-second (typical) |
+| OpenAI | GPT-4o | Complex root cause analysis | varies | ~1s-class (typical) |
+| Google | Gemini Flash | Fast summaries | varies | sub-second to ~1s (typical) |
+| Anthropic | Claude Sonnet | Long-form reports | varies | ~1s+ (typical) |
+| Deterministic | N/A (regex) | Simple metric lookups | $0 | milliseconds |
+
+> Note: costs/latency are highly workload/provider dependent; treat these as directional.
 
 **Configuration flexibility:**
 ```yaml
@@ -523,11 +558,11 @@ Evidence:
 
 **We tried:** Standalone web app at `https://ai-obs.example.com`
 
-**Result:** 12% adoption rate. SREs didn't want another tab open.
+**Result:** Low adoption. SREs didn't want another tab open during incident response.
 
 **We shipped:** OpenShift Console plugin (native left-nav integration)
 
-**Result:** 67% adoption rate within 2 weeks.
+**Result:** Much higher adoption in internal pilots because the workflow lived next to existing monitoring.
 
 **Lesson:** Build tools where operators already spend their time, not where you think they should spend it.
 
@@ -625,12 +660,23 @@ When Tempo and Loki are enabled via the observability stack:
 
 The AI Observability Summarizer is open source and designed for OpenShift + OpenShift AI environments.
 
-**Quick start:**
+**Prereqs (minimal):**
+- OpenShift cluster with access to Prometheus/Thanos (OpenShift Monitoring)
+- Optional but recommended: Tempo + Loki (or equivalent) if you want full metrics↔traces↔logs correlation
+- An LLM backend (local or external), depending on your data-locality requirements
+
+**Quick start (fast path):**
 ```bash
 make install NAMESPACE=your-namespace
 ```
 
 Access it via the OpenShift Console → **AI Observability** menu.
+
+**Good first queries to try:**
+- "Are there any alerts firing right now in my namespace?"
+- "Why did P95 latency spike in the last 30 minutes?"
+- "Show me GPU utilization and GPU memory for the inference namespace"
+- "What changed around the time latency increased?"
 
 **Repo**: [github.com/rh-ai-quickstart/openshift-ai-observability-summarizer](https://github.com/rh-ai-quickstart/openshift-ai-observability-summarizer)
 
@@ -706,6 +752,23 @@ For the past decade, we've treated observability as a **data collection problem*
 - What action should I take next?
 
 These are tasks LLMs excel at—when given structured data, clear objectives, and validation guardrails.
+
+### Operational guardrails (how we avoid “AI vibes”)
+
+We designed the summarizer so it behaves like an SRE tool, not a chatbot:
+
+- **No hidden sources**: every claim must cite a metric query, a trace sample, or a log excerpt
+- **Fail closed on format**: if the model output doesn’t match the contract, we retry or return raw data + an explanation
+- **No write actions by default**: this is an investigation/communication tool; remediation stays explicit and human-controlled
+- **Timeouts and rate limits**: protect the observability backends and keep the UI responsive during incident spikes
+- **Provider choice**: use local models when you can’t send telemetry off-cluster
+
+### Limitations (and when not to use it)
+
+- **Simple lookups**: if you just need a single metric value or a known PromQL query, deterministic tooling is faster.
+- **Correlation depends on telemetry quality**: missing labels, inconsistent trace propagation, or noisy logs can reduce correlation accuracy.
+- **LLMs don’t replace postmortems**: the tool accelerates investigation and communication, but incident conclusions should still be verified against source signals.
+- **Access is bounded by RBAC**: the summarizer can only see what the requesting user/service account can query.
 
 ### Key Architectural Principles (for SREs building similar systems)
 
