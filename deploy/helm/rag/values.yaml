@@ -83,51 +83,17 @@ llama-stack:
     #  mcp-weather:
     #   uri: http://rag-mcp-weather:8000/sse
 
-
-llama-stack-instance:
-  enabled: false
-  env:
-    - name: VLLM_MAX_TOKENS
-      value: "4096"
-    - name: VLLM_API_TOKEN
-      value: fake
-    - name: OTEL_ENDPOINT
-      value: http://otel-collector-collector.observability-hub.svc.cluster.local:4318/v1/traces
-    - name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
-      value: sqlite3
-    - name: POSTGRES_USER
-      valueFrom:
-        secretKeyRef:
-          key: user
-          name: pgvector
-    - name: POSTGRES_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          key: password
-          name: pgvector
-    - name: POSTGRES_HOST
-      valueFrom:
-        secretKeyRef:
-          key: host
-          name: pgvector
-    - name: POSTGRES_PORT
-      valueFrom:
-        secretKeyRef:
-          key: port
-          name: pgvector
-    - name: POSTGRES_DBNAME
-      valueFrom:
-        secretKeyRef:
-          key: dbname
-          name: pgvector
-  secrets:
-    TAVILY_SEARCH_API_KEY: "Paste-your-key-here"
-  # Namespace in uri is expanded via tpl in llama-stack-instance/templates/configmap.yaml.
-  mcp-servers:
-    observability-mcp:
-      uri: http://aiobs-mcp-server-svc.{{ .Release.Namespace }}.svc.cluster.local:8085/mcp
-    #  mcp-weather:
-    #   uri: http://rag-mcp-weather:8000/sse
+  # Operator mode configuration
+  # These values are only used when managedByOperator: true
+  userConfig: {}
+  network:
+    exposeRoute: false
+    # Allow pods in the deployment namespace to reach llamastack (e.g. MCP server).
+    # Defaults to the operator-enforced namespace; overridden by Makefile via
+    # --set llama-stack.network.allowedFrom.namespaces[0]=$(NAMESPACE) for non-operator installs.
+    allowedFrom:
+      namespaces:
+        - "ai-observability"
 
 
 ingestion-pipeline:
